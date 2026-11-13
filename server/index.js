@@ -7,6 +7,7 @@
 //   PUT    /tasks/:id                 → modifier (titre, statut, rappels, observateurs…)
 //   DELETE /tasks/:id                 → supprimer (et ses fichiers)
 //   POST   /tasks/:id/fichiers        → joindre un fichier (champ « fichier », multipart)
+//   PUT    /tasks/:id/fichiers/:fid   → renommer un fichier joint
 //   DELETE /tasks/:id/fichiers/:fid   → retirer un fichier joint
 //   GET    /uploads/<nom>             → télécharger / afficher un fichier joint
 //   POST   /reset                     → remettre les tâches d'exemple
@@ -186,6 +187,18 @@ app.post('/tasks/:id/fichiers', upload.single('fichier'), (req, res) => {
   tache.piecesJointes.push(piece);
   ecrire(taches);
   res.status(201).json(tache);
+});
+
+app.put('/tasks/:id/fichiers/:fid', (req, res) => {
+  const nom = typeof req.body.nom === 'string' ? req.body.nom.trim() : '';
+  if (!nom || nom.length > 100) return res.status(400).json({ erreur: 'nom : 1 à 100 caractères' });
+  const taches = lire();
+  const tache = taches.find((x) => x.id === req.params.id);
+  const piece = tache && tache.piecesJointes.find((p) => p.id === req.params.fid);
+  if (!piece) return res.status(404).json({ erreur: 'Fichier introuvable' });
+  piece.nom = nom;
+  ecrire(taches);
+  res.json(tache);
 });
 
 app.delete('/tasks/:id/fichiers/:fid', (req, res) => {

@@ -82,6 +82,10 @@ export function TaskProvider({ children }) {
     remplacer(await api.supprimerFichierApi(id, fid));
   };
 
+  const renommerPieceJointe = async (id, fid, nom) => {
+    remplacer(await api.renommerFichierApi(id, fid, nom));
+  };
+
   const reinitialiser = async () => {
     try {
       setTaches(await api.reinitialiserApi());
@@ -99,7 +103,7 @@ export function TaskProvider({ children }) {
   const valeur = {
     taches, chargement, erreur, stats, rafraichir,
     ajouterTache, getTache, modifierTache, supprimerTache, basculerStatut, reinitialiser,
-    ajouterPieceJointe, supprimerPieceJointe,
+    ajouterPieceJointe, supprimerPieceJointe, renommerPieceJointe,
   };
 
   return <TaskContext.Provider value={valeur}>{children}</TaskContext.Provider>;

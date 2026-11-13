@@ -40,6 +40,7 @@ Adresse du serveur (`src/config.js`) :
 | PUT | `/tasks/:id` | modifier |
 | DELETE | `/tasks/:id` | supprimer (et ses fichiers) |
 | POST | `/tasks/:id/fichiers` | joindre un fichier (multipart, champ `fichier`, 10 Mo max) |
+| PUT | `/tasks/:id/fichiers/:fid` | renommer un fichier joint |
 | DELETE | `/tasks/:id/fichiers/:fid` | retirer un fichier joint |
 | GET | `/uploads/<nom>` | afficher / télécharger un fichier joint |
 | POST | `/reset` | remettre les tâches d'exemple |
@@ -58,13 +59,14 @@ Tout se trouve dans l'écran **Détails** d'une tâche (sections sous les bouton
 
 | Fonction | Comment | Bibliothèque |
 |---|---|---|
-| **Photo (caméra)** | bouton « Caméra » → photo envoyée au serveur | `expo-image-picker` |
-| **Image (galerie)** | bouton « Galerie » ; toucher une miniature = plein écran, appui long = retirer | `expo-image-picker` |
+| **Photo (caméra)** | bouton « Caméra » : caméra du téléphone, ou **webcam du PC** sur le web (`CameraWeb.web.js`, `getUserMedia`) | `expo-image-picker` |
+| **Image (galerie)** | bouton « Galerie » ; toucher une image = plein écran | `expo-image-picker` |
 | **Fichier** | bouton « Fichier » (PDF, Word…) ; toucher = ouvrir / télécharger | `expo-document-picker` |
+| **Modifier / supprimer un fichier** | ✏️ renommer, 🗑 supprimer (aussi effacé du disque du serveur) | — |
 | **Rappel à une date** | « Choisir date et heure » ou raccourcis (Dans 1 min, Dans 1 h, Demain 9 h) → notification | `@react-native-community/datetimepicker`, `expo-notifications` |
 | **Rappel de lieu** | « Choisir sur la carte » : toucher la carte ou « Ma position actuelle », nom du lieu (ex. Bureau), rayon → notification en entrant dans la zone | `expo-location` |
 | **Carte** | OpenStreetMap avec Leaflet, affichée dans une WebView (iframe sur le web) | `react-native-webview` |
-| **Observateurs** | nom + e-mail des personnes qui suivent la tâche ; bouton « Prévenir » = e-mail à tous | — |
+| **Observateurs** | ajouter (nom + e-mail), ✏️ modifier, 🗑 supprimer ; bouton « Prévenir » = e-mail à tous | — |
 
 La liste des tâches affiche aussi de petites icônes (📎 fichiers, ⏰ date, 📍 lieu, 👁 observateurs).
 
@@ -77,7 +79,7 @@ La liste des tâches affiche aussi de petites icônes (📎 fichiers, ⏰ date, 
 
 **Tester sur l'émulateur Android :**
 1. Rappel date : bouton « Dans 1 min », attendre → notification.
-2. Caméra : l'émulateur fournit une caméra virtuelle (scène 3D).
+2. Caméra : l'émulateur fournit une caméra virtuelle (scène 3D). Sur le web (`w`), le navigateur demande l'accès à la webcam du PC.
 3. Rappel de lieu : choisir un lieu sur la carte, puis dans l'émulateur `⋯` (Extended controls) → **Location** → placer le point dans la zone → **Set location** → notification.
 
 ## 2. Arborescence

@@ -38,6 +38,9 @@ export async function envoyerFichier(id, { uri, nom, mime, file }) {
   return requete(`/tasks/${id}/fichiers`, { method: 'POST', body: form, delai: 60000 });
 }
 
+export const renommerFichierApi = (id, fid, nom) =>
+  requete(`/tasks/${id}/fichiers/${fid}`, { method: 'PUT', body: JSON.stringify({ nom }) });
+
 export const supprimerFichierApi = (id, fid) => requete(`/tasks/${id}/fichiers/${fid}`, { method: 'DELETE' });
 
 // Adresse complète d'un fichier joint (pour l'afficher ou le télécharger)
