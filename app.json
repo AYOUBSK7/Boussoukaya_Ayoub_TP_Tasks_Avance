@@ -19,6 +19,22 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "MyTasks utilise la caméra pour joindre une photo à une tâche.",
+          "photosPermission": "MyTasks accède à vos photos pour joindre une image à une tâche."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "MyTasks utilise votre position pour les rappels de lieu."
+        }
+      ],
+      "expo-notifications"
+    ]
   }
 }

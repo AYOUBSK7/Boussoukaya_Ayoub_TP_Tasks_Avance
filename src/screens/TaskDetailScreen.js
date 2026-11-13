@@ -1,9 +1,13 @@
 // Partie 4 — Écran 3 : Détails d'une tâche (infos complètes, modification, suppression)
+// + pièces jointes, rappels (date / lieu) et observateurs
 import React from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Badge from '../components/Badge';
 import GradientButton from '../components/GradientButton';
+import SectionPiecesJointes from '../components/SectionPiecesJointes';
+import SectionRappels from '../components/SectionRappels';
+import SectionObservateurs from '../components/SectionObservateurs';
 import { useTasks } from '../context/TaskContext';
 import { COLORS, GRADIENTS, PRIORITES, RADIUS, SHADOW, STATUTS } from '../constants/theme';
 import { confirmer, formaterDate } from '../utils/helpers';
@@ -88,6 +92,10 @@ export default function TaskDetailScreen({ route, navigation }) {
         <GradientButton style={{ flex: 1 }} variant="soft" color={COLORS.danger}
           title="Supprimer" icon="trash-outline" onPress={onSupprimer} />
       </View>
+
+      <SectionPiecesJointes tache={tache} />
+      <SectionRappels tache={tache} navigation={navigation} />
+      <SectionObservateurs tache={tache} />
     </ScrollView>
   );
 }

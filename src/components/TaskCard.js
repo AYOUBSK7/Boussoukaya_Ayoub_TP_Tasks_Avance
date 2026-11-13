@@ -11,6 +11,15 @@ import Badge from './Badge';
 import { COLORS, PRIORITES, STATUTS, RADIUS, SHADOW } from '../constants/theme';
 import { formaterDate } from '../utils/helpers';
 
+function Indicateur({ icon, texte }) {
+  return (
+    <View style={styles.indicateur}>
+      <Ionicons name={icon} size={13} color={COLORS.primary} />
+      {texte !== undefined && <Text style={styles.texteIndicateur}>{texte}</Text>}
+    </View>
+  );
+}
+
 export default function TaskCard({ tache, onPress, onToggleStatut, compact = false }) {
   const priorite = PRIORITES[tache.priorite];
   const statut = STATUTS[tache.statut];
@@ -50,6 +59,15 @@ export default function TaskCard({ tache, onPress, onToggleStatut, compact = fal
             </Text>
           </View>
         </View>
+        {/* Petites icônes : fichiers, rappel date, rappel lieu, observateurs */}
+        {(tache.piecesJointes?.length > 0 || !!tache.rappelDate || !!tache.rappelLieu || tache.observateurs?.length > 0) && (
+          <View style={styles.icones}>
+            {tache.piecesJointes?.length > 0 && <Indicateur icon="attach" texte={tache.piecesJointes.length} />}
+            {!!tache.rappelDate && <Indicateur icon="alarm-outline" />}
+            {!!tache.rappelLieu && <Indicateur icon="location-outline" />}
+            {tache.observateurs?.length > 0 && <Indicateur icon="eye-outline" texte={tache.observateurs.length} />}
+          </View>
+        )}
       </View>
 
       <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
@@ -78,4 +96,10 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3, flexWrap: 'wrap' },
   date: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   texteDate: { fontSize: 12, color: COLORS.textLight },
+  icones: { flexDirection: 'row', gap: 6, marginTop: 2 },
+  indicateur: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: COLORS.primarySoft, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2,
+  },
+  texteIndicateur: { fontSize: 11.5, fontWeight: '700', color: COLORS.primary },
 });

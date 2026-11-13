@@ -8,6 +8,21 @@ export function formaterDate(iso) {
   return `${jour}/${mois}/${d.getFullYear()}`;
 }
 
+// Formate une date ISO en jj/mm/aaaa à hh:mm (ex : 12/04/2025 à 09:30)
+export function formaterDateHeure(iso) {
+  const d = new Date(iso);
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${formaterDate(iso)} à ${h}:${m}`;
+}
+
+// Taille lisible d'un fichier (ex : 1,2 Mo)
+export function formaterTaille(octets = 0) {
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${Math.round(octets / 1024)} Ko`;
+  return `${(octets / 1024 / 1024).toFixed(1).replace('.', ',')} Mo`;
+}
+
 // Génère un identifiant unique simple
 export function genererId() {
   return Date.now().toString() + Math.random().toString(36).slice(2, 7);

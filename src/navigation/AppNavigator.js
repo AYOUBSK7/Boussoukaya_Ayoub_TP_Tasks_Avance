@@ -6,7 +6,8 @@
 //   │              ├── TaskList   (Liste des tâches)
 //   │              ├── TaskDetail (Détails)
 //   │              ├── AddTask    (Formulaire en mode ajout)
-//   │              └── EditTask   (Formulaire en mode modification)
+//   │              ├── EditTask   (Formulaire en mode modification)
+//   │              └── ChoisirLieu (carte OpenStreetMap pour le rappel de lieu)
 //   ├── Ajouter  → bouton central "+" (raccourci vers Tâches > AddTask)
 //   └── Profil   → ProfileScreen
 import React from 'react';
@@ -23,6 +24,7 @@ import TaskDetailScreen from '../screens/TaskDetailScreen';
 import TaskFormScreen from '../screens/TaskFormScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LoadingScreen from '../screens/LoadingScreen';
+import LieuScreen from '../screens/LieuScreen';
 import { useTasks } from '../context/TaskContext';
 import { COLORS, GRADIENTS } from '../constants/theme';
 
@@ -52,6 +54,7 @@ function TasksStack() {
       <Stack.Screen name="TaskDetail" component={TaskDetailScreen} options={{ title: 'Détails' }} />
       <Stack.Screen name="AddTask" component={TaskFormScreen} options={{ title: 'Ajouter une tâche' }} />
       <Stack.Screen name="EditTask" component={TaskFormScreen} options={{ title: 'Modifier une tâche' }} />
+      <Stack.Screen name="ChoisirLieu" component={LieuScreen} options={{ title: 'Rappel de lieu' }} />
     </Stack.Navigator>
   );
 }

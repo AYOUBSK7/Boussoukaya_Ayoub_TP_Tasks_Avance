@@ -69,6 +69,19 @@ export function TaskProvider({ children }) {
     if (t) modifierTache(id, { statut: t.statut === 'a_faire' ? 'terminee' : 'a_faire' });
   };
 
+  // ---------- Fichiers joints (photo, image, document) ----------
+  // Ici on attend la réponse du serveur : il faut que le fichier soit vraiment envoyé.
+  const remplacer = (tacheServeur) =>
+    setTaches((prev) => prev.map((t) => (t.id === tacheServeur.id ? tacheServeur : t)));
+
+  const ajouterPieceJointe = async (id, fichier) => {
+    remplacer(await api.envoyerFichier(id, fichier));
+  };
+
+  const supprimerPieceJointe = async (id, fid) => {
+    remplacer(await api.supprimerFichierApi(id, fid));
+  };
+
   const reinitialiser = async () => {
     try {
       setTaches(await api.reinitialiserApi());
@@ -86,6 +99,7 @@ export function TaskProvider({ children }) {
   const valeur = {
     taches, chargement, erreur, stats, rafraichir,
     ajouterTache, getTache, modifierTache, supprimerTache, basculerStatut, reinitialiser,
+    ajouterPieceJointe, supprimerPieceJointe,
   };
 
   return <TaskContext.Provider value={valeur}>{children}</TaskContext.Provider>;
