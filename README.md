@@ -1,11 +1,12 @@
-# MyTasks — Version 2 : EN LIGNE (API Express)
+# MyTasks — Version avancée : fichiers, caméra, rappels, carte, observateurs
 
 **Ayoub Boussoukaya — L3 DSI — ISET Djerba** · TP React Native (Expo SDK 58)
 
-> Ce dépôt fait partie d'un TP en 3 versions de la même application :
-> 1. **Local** : AsyncStorage, sans serveur.
-> 2. **API** (ce dépôt) : les tâches sont uniquement sur le serveur Express ; sans serveur l'application n'a pas de données.
-> 3. **Hybride** : stockage local + synchronisation avec le serveur.
+> Ce dépôt est la **suite** du TP MyTasks. Il part de la version **API** (tâches sur un serveur Express)
+> et ajoute : pièces jointes (caméra, galerie, fichier), rappels à une date et à un lieu,
+> carte OpenStreetMap et observateurs (voir « Partie 2 » plus bas).
+>
+> Autres dépôts du TP : `Boussoukaya_Ayoub_TP_Tasks_Local`, `Boussoukaya_Ayoub_TP_Tasks_API`, `Boussoukaya_Ayoub_TP_Tasks_Hybride`.
 
 ## 1. Installation et lancement
 
@@ -51,7 +52,7 @@ Les données sont enregistrées dans `server/data/tasks.json`, les fichiers join
 
 - Au démarrage, `TaskContext` charge la liste avec `GET /tasks` (écran de chargement pendant ce temps).
 - Chaque action (ajout, modification, suppression, statut) met l'écran à jour **tout de suite**, puis envoie la requête. Si elle échoue, la liste est rechargée depuis le serveur et un message apparaît dans l'onglet **Profil** (état « Connecté / Hors ligne » + bouton « Actualiser »).
-- Sans connexion, rien n'est conservé sur le téléphone : c'est la différence avec les versions 1 et 3.
+- Sans connexion, rien n'est conservé sur le téléphone (comme la version API).
 
 ## Partie 2 — Nouvelles fonctionnalités
 
@@ -85,7 +86,7 @@ La liste des tâches affiche aussi de petites icônes (📎 fichiers, ⏰ date, 
 ## 2. Arborescence
 
 ```
-boussoukaya_ayoub_tp_tasks_api/
+boussoukaya_ayoub_tp_tasks_avance/
 ├── App.js, index.js, app.json, package.json   ← application Expo
 ├── server/                      ← API Express
 │   ├── index.js                 ← routes REST + fichiers (multer) + stockage dans data/tasks.json
