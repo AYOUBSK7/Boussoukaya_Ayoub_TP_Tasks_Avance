@@ -1,127 +1,127 @@
-# MyTasks — Version avancée : fichiers, caméra, rappels, carte, observateurs
+# MyTasks — Version avancée
 
-**Ayoub Boussoukaya — L3 DSI — ISET Djerba** · TP React Native (Expo SDK 58)
+**Ayoub Boussoukaya — L3 DSI — ISET Djerba** · TP React Native (Expo SDK 58) + API Express
 
-> Ce dépôt est la **suite** du TP MyTasks. Il part de la version **API** (tâches sur un serveur Express)
-> et ajoute : pièces jointes (caméra, galerie, fichier), rappels à une date et à un lieu,
-> carte OpenStreetMap et observateurs (voir « Partie 2 » plus bas).
->
-> Autres dépôts du TP : `Boussoukaya_Ayoub_TP_Tasks_Local`, `Boussoukaya_Ayoub_TP_Tasks_API`, `Boussoukaya_Ayoub_TP_Tasks_Hybride`.
+Application de gestion de tâches. Les tâches sont enregistrées sur un serveur **Express** (API REST).
+Cette version ajoute : **caméra**, **fichiers** (envoi et téléchargement), **rappels** à une date et à un lieu
+(carte **OpenStreetMap**), **observateurs** et **commentaires avec notification**.
 
-## 1. Installation et lancement
+> Autres dépôts du TP : `Boussoukaya_Ayoub_TP_Tasks_Local`, `..._API`, `..._Hybride`.
 
-**Terminal 1 — le serveur** (port 3000) :
+---
+
+## 1. Lancer le projet
+
+**Terminal 1 — le serveur** (port 3000)
 ```bash
 cd server
 npm install
 npm start
 ```
 
-**Terminal 2 — l'application** :
+**Terminal 2 — l'application**
 ```bash
 npm install
-npx expo start        # puis a (Android), w (web) ou QR code avec Expo Go
+npx expo start -c      # a = émulateur Android, w = navigateur, QR code = Expo Go
 ```
 
-Adresse du serveur (`src/config.js`) :
-
-| Où tourne l'app | Adresse utilisée |
+| L'app tourne sur… | Adresse du serveur (`src/config.js`) |
 |---|---|
 | Émulateur Android | `http://10.0.2.2:3000` (10.0.2.2 = le PC) |
-| Web / simulateur iOS | `http://localhost:3000` |
-| Vrai téléphone | IP du PC : `EXPO_PUBLIC_API_URL=http://192.168.1.20:3000 npx expo start` |
+| Navigateur | `http://localhost:3000` |
+| Vrai téléphone | `EXPO_PUBLIC_API_URL=http://<IP du PC>:3000 npx expo start` |
 
-## Routes de l'API
+---
+
+## 2. Les 6 fonctionnalités demandées
+
+Toutes se trouvent dans l'écran **Détails** d'une tâche, rangées en 3 onglets : **Fichiers · Rappels · Suivi**.
+
+| # | Demande | Comment c'est fait | Fichiers |
+|---|---|---|---|
+| 1 | **Communiquer avec la caméra** | Téléphone : `expo-image-picker` (`launchCameraAsync`). Navigateur : webcam du PC avec `getUserMedia` + capture dans un `<canvas>` | `SectionPiecesJointes.js`, `CameraWeb.web.js` |
+| 2 | **Ajouter un fichier** | `expo-document-picker` → envoi en **FormData** (`POST /tasks/:id/fichiers`) → **multer** range le fichier dans `server/uploads/` | `utils/api.js`, `server/index.js` |
+| 3 | **Appeler une API pour récupérer un fichier** | Bouton ⬇ → `GET /tasks/:id/fichiers/:fid` (le serveur répond avec `res.download`). Téléphone : `expo-file-system` enregistre puis `expo-sharing` ouvre / partage. Navigateur : `fetch` → Blob → téléchargement | `utils/telechargement.js` / `.web.js` |
+| 4 | **Rappel à une date et une heure** | Sélecteur date + heure (ou « Dans 1 min / 1 h / Demain 9 h ») → `rappelDate` sur le serveur → notification locale programmée (`expo-notifications`) | `SectionRappels.js`, `utils/rappels.js` |
+| 5 | **Rappel à une position (carte)** | Carte **OpenStreetMap** (Leaflet dans une WebView) : on touche la carte ou « Ma position », on choisit un rayon. L'app suit la position (`expo-location`) et notifie en entrant dans la zone (formule de **haversine**) | `LieuScreen.js`, `CarteOSM.js`, `SurveillanceRappels.js` |
+| 6 | **Observateurs + commentaires + notification** | Observateurs (nom + e-mail). Commentaires sur la tâche (ajouter / modifier / supprimer les siens). Toutes les 10 s, l'app appelle `GET /notifications` : chaque nouveau commentaire écrit par quelqu'un d'autre sur une tâche observée → **notification** (bannière sur le web) | `SectionObservateurs.js`, `SectionCommentaires.js`, `SurveillanceCommentaires.js` |
+
+**Mon identité** (onglet Profil) : nom + e-mail enregistrés sur l'appareil (AsyncStorage). Ils signent les commentaires,
+et c'est cet e-mail qui reçoit les notifications quand il est dans la liste des observateurs.
+
+---
+
+## 3. Routes de l'API
 
 | Méthode | Route | Rôle |
 |---|---|---|
 | GET | `/tasks` | liste des tâches |
-| GET | `/tasks/:id` | une tâche |
-| POST | `/tasks` | créer (titre ≥ 3 caractères) |
-| PUT | `/tasks/:id` | modifier |
-| DELETE | `/tasks/:id` | supprimer (et ses fichiers) |
-| POST | `/tasks/:id/fichiers` | joindre un fichier (multipart, champ `fichier`, 10 Mo max) |
-| PUT | `/tasks/:id/fichiers/:fid` | renommer un fichier joint |
-| DELETE | `/tasks/:id/fichiers/:fid` | retirer un fichier joint |
-| GET | `/uploads/<nom>` | afficher / télécharger un fichier joint |
+| POST | `/tasks` | créer une tâche |
+| PUT | `/tasks/:id` | modifier (titre, statut, rappels, observateurs) |
+| DELETE | `/tasks/:id` | supprimer la tâche et ses fichiers |
+| POST | `/tasks/:id/fichiers` | envoyer un fichier (multipart, champ `fichier`, 10 Mo max) |
+| **GET** | **`/tasks/:id/fichiers/:fid`** | **récupérer (télécharger) le fichier** |
+| PUT | `/tasks/:id/fichiers/:fid` | renommer un fichier |
+| DELETE | `/tasks/:id/fichiers/:fid` | supprimer un fichier |
+| POST | `/tasks/:id/commentaires` | ajouter un commentaire `{ auteur, email, texte }` |
+| PUT | `/tasks/:id/commentaires/:cid` | modifier un commentaire |
+| DELETE | `/tasks/:id/commentaires/:cid` | supprimer un commentaire |
+| GET | `/notifications?email=…&depuis=…` | nouveaux commentaires pour un observateur |
+| GET | `/uploads/<nom>` | afficher un fichier (miniatures) |
 | POST | `/reset` | remettre les tâches d'exemple |
 
-Les données sont enregistrées dans `server/data/tasks.json`, les fichiers joints dans `server/uploads/`.
+Données : `server/data/tasks.json` · fichiers : `server/uploads/`.
 
-## Fonctionnement côté application
+---
 
-- Au démarrage, `TaskContext` charge la liste avec `GET /tasks` (écran de chargement pendant ce temps).
-- Chaque action (ajout, modification, suppression, statut) met l'écran à jour **tout de suite**, puis envoie la requête. Si elle échoue, la liste est rechargée depuis le serveur et un message apparaît dans l'onglet **Profil** (état « Connecté / Hors ligne » + bouton « Actualiser »).
-- Sans connexion, rien n'est conservé sur le téléphone (comme la version API).
-
-## Partie 2 — Nouvelles fonctionnalités
-
-Tout se trouve dans l'écran **Détails** d'une tâche (sections sous les boutons) :
-
-| Fonction | Comment | Bibliothèque |
-|---|---|---|
-| **Photo (caméra)** | bouton « Caméra » : caméra du téléphone, ou **webcam du PC** sur le web (`CameraWeb.web.js`, `getUserMedia`) | `expo-image-picker` |
-| **Image (galerie)** | bouton « Galerie » ; toucher une image = plein écran | `expo-image-picker` |
-| **Fichier** | bouton « Fichier » (PDF, Word…) ; toucher = ouvrir / télécharger | `expo-document-picker` |
-| **Modifier / supprimer un fichier** | ✏️ renommer, 🗑 supprimer (aussi effacé du disque du serveur) | — |
-| **Rappel à une date** | « Choisir date et heure » ou raccourcis (Dans 1 min, Dans 1 h, Demain 9 h) → notification | `@react-native-community/datetimepicker`, `expo-notifications` |
-| **Rappel de lieu** | « Choisir sur la carte » : toucher la carte ou « Ma position actuelle », nom du lieu (ex. Bureau), rayon → notification en entrant dans la zone | `expo-location` |
-| **Carte** | OpenStreetMap avec Leaflet, affichée dans une WebView (iframe sur le web) | `react-native-webview` |
-| **Observateurs** | ajouter (nom + e-mail), ✏️ modifier, 🗑 supprimer ; bouton « Prévenir » = e-mail à tous | — |
-
-La liste des tâches affiche aussi de petites icônes (📎 fichiers, ⏰ date, 📍 lieu, 👁 observateurs).
-
-**Comment ça marche :**
-- Les fichiers sont envoyés avec `FormData` (`src/utils/api.js`) et rangés par **multer** dans `server/uploads/`.
-- Les rappels sont enregistrés sur le serveur (`rappelDate`, `rappelLieu`) ; le composant invisible `SurveillanceRappels` programme les notifications sur le téléphone.
-- Rappel de lieu : l'app suit la position (`watchPositionAsync`) et calcule la distance avec la formule de **haversine** (`src/utils/rappels.js`). Une seule notification par entrée dans la zone.
-- ⚠️ Avec **Expo Go**, le rappel de lieu marche seulement **quand l'application est ouverte** (le suivi en arrière-plan demande un build Android). Expo Go peut aussi afficher un avertissement sur les notifications *push* : il ne concerne pas nos notifications locales.
-- La carte charge Leaflet et les tuiles OpenStreetMap depuis Internet : le téléphone / l'émulateur doit être connecté.
-
-**Tester sur l'émulateur Android :**
-1. Rappel date : bouton « Dans 1 min », attendre → notification.
-2. Caméra : l'émulateur fournit une caméra virtuelle (scène 3D). Sur le web (`w`), le navigateur demande l'accès à la webcam du PC.
-3. Rappel de lieu : choisir un lieu sur la carte, puis dans l'émulateur `⋯` (Extended controls) → **Location** → placer le point dans la zone → **Set location** → notification.
-
-## 2. Arborescence
-
-```
-boussoukaya_ayoub_tp_tasks_avance/
-├── App.js, index.js, app.json, package.json   ← application Expo
-├── server/                      ← API Express
-│   ├── index.js                 ← routes REST + fichiers (multer) + stockage dans data/tasks.json
-│   ├── initial.js               ← tâches d'exemple
-│   └── package.json
-└── src/
-    ├── config.js                ← adresse du serveur (API_URL)
-    ├── utils/api.js             ← appels fetch vers l'API (remplace AsyncStorage)
-    ├── utils/helpers.js         ← format de date, id unique, confirmation
-    ├── utils/rappels.js         ← notifications + distance GPS (haversine)
-    ├── context/TaskContext.js   ← état global + CRUD relié à l'API + fichiers joints
-    ├── components/
-    │   ├── SectionPiecesJointes.js  ← caméra, galerie, fichiers
-    │   ├── SectionRappels.js        ← rappel date + rappel lieu
-    │   ├── SectionObservateurs.js   ← observateurs
-    │   ├── CarteOSM.js              ← carte OpenStreetMap (Leaflet)
-    │   ├── BoutonDate.js / .web.js  ← choix date et heure (mobile / web)
-    │   └── SurveillanceRappels.js   ← programme les notifications, suit la position
-    ├── screens/LieuScreen.js    ← choisir le lieu du rappel sur la carte
-    └── constants/, navigation/, autres screens/   ← interface de base
-```
-
-## 3. Modèle d'une tâche
+## 4. Modèle d'une tâche
 
 ```js
 {
-  id: '1',
-  titre: 'Préparer la présentation',
-  description: 'Réaliser les diapositives…',
-  priorite: 'elevee',        // 'faible' | 'moyenne' | 'elevee'
-  statut: 'a_faire',         // 'a_faire' | 'terminee'
-  dateCreation: '2025-04-12T09:00:00.000Z',
-  piecesJointes: [{ id, nom: 'photo.jpg', type: 'image', mime, taille, url: '/uploads/…' }],
-  rappelDate: '2026-11-20T08:00:00.000Z',              // ou null
+  id, titre, description, priorite, statut, dateCreation,
+  piecesJointes: [{ id, nom, type: 'image' | 'fichier', mime, taille, url }],
+  rappelDate: '2026-11-20T08:00:00.000Z',                          // ou null
   rappelLieu: { latitude, longitude, rayon: 200, nom: 'Bureau' }, // ou null
-  observateurs: [{ id, nom: 'Prof', email: 'prof@iset.tn' }]
+  observateurs: [{ id, nom, email }],
+  commentaires: [{ id, auteur, email, texte, date, modifie? }]
 }
 ```
+
+---
+
+## 5. Démo rapide
+
+1. **Profil** : saisir son nom + e-mail → « Enregistrer mon profil ».
+2. Ouvrir une tâche → onglet **Fichiers** : Caméra (photo), Fichier (PDF), ⬇ pour le télécharger via l'API.
+3. Onglet **Rappels** : « Dans 1 min » → notification. « Choisir sur la carte » → Bureau, 200 m → Enregistrer.
+   Émulateur : `⋯` → **Location** → placer le point dans le cercle → **Set location** → notification.
+4. Onglet **Suivi** : ajouter un observateur, écrire un commentaire.
+5. **Notification de commentaire** : ouvrir l'app sur 2 appareils (ex. navigateur + émulateur) avec 2 profils.
+   L'un « Suit cette tâche », l'autre commente → en 10 s le premier reçoit la notification.
+
+⚠️ Avec **Expo Go**, le rappel de lieu et les notifications de commentaires fonctionnent quand l'app est ouverte
+(en arrière-plan, il faudrait un build Android + `expo-task-manager` / notifications push).
+
+---
+
+## 6. Arborescence
+
+```
+├── App.js                      Providers + surveillances (rappels, commentaires) + bannière
+├── server/index.js             API Express : tâches, fichiers (multer), commentaires, notifications
+└── src/
+    ├── config.js               adresse du serveur
+    ├── context/                TaskContext (tâches + API) · ProfilContext (mon nom + e-mail)
+    ├── utils/                  api.js · rappels.js · telechargement.js (.web.js) · banniere.js · helpers.js
+    ├── screens/                Accueil · Liste · Détails (onglets) · Formulaire · Lieu (carte) · Profil
+    └── components/             SectionPiecesJointes · SectionRappels · SectionObservateurs ·
+                                SectionCommentaires · CarteOSM · CameraWeb · BoutonDate · Onglets ·
+                                SurveillanceRappels · SurveillanceCommentaires · Banniere · …
+```
+
+## 7. Bibliothèques
+
+`expo-image-picker` (caméra, galerie) · `expo-document-picker` (fichier) · `expo-file-system` + `expo-sharing`
+(téléchargement) · `expo-notifications` (rappels) · `expo-location` (position) · `react-native-webview` (carte
+Leaflet / OpenStreetMap) · `@react-native-community/datetimepicker` · `@react-native-async-storage/async-storage`
+(profil) · serveur : `express`, `cors`, `multer`.

@@ -60,12 +60,13 @@ export default function TaskCard({ tache, onPress, onToggleStatut, compact = fal
           </View>
         </View>
         {/* Petites icônes : fichiers, rappel date, rappel lieu, observateurs */}
-        {(tache.piecesJointes?.length > 0 || !!tache.rappelDate || !!tache.rappelLieu || tache.observateurs?.length > 0) && (
+        {(tache.piecesJointes?.length > 0 || !!tache.rappelDate || !!tache.rappelLieu || tache.observateurs?.length > 0 || tache.commentaires?.length > 0) && (
           <View style={styles.icones}>
             {tache.piecesJointes?.length > 0 && <Indicateur icon="attach" texte={tache.piecesJointes.length} />}
             {!!tache.rappelDate && <Indicateur icon="alarm-outline" />}
             {!!tache.rappelLieu && <Indicateur icon="location-outline" />}
             {tache.observateurs?.length > 0 && <Indicateur icon="eye-outline" texte={tache.observateurs.length} />}
+            {tache.commentaires?.length > 0 && <Indicateur icon="chatbubble-outline" texte={tache.commentaires.length} />}
           </View>
         )}
       </View>

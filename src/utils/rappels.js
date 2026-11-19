@@ -1,6 +1,7 @@
 // Rappels : notifications locales (expo-notifications) + calcul de distance (rappel de lieu)
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { afficherBanniere } from './banniere';
 
 const WEB = Platform.OS === 'web'; // pas de notifications locales sur le web
 
@@ -50,10 +51,11 @@ async function planifier(taches) {
   }
 }
 
-// Notification immédiate (utilisée pour le rappel de lieu)
-export async function notifierMaintenant(titre, corps) {
+// Notification immédiate (rappel de lieu, nouveau commentaire)
+// Sur le web : bannière dans l'application (pas de notifications locales)
+export async function notifierMaintenant(titre, corps, icon = 'notifications') {
   if (WEB) {
-    window.alert(`${titre}\n\n${corps}`);
+    afficherBanniere({ titre, texte: corps, icon });
     return;
   }
   await Notifications.scheduleNotificationAsync({ content: { title: titre, body: corps }, trigger: null });

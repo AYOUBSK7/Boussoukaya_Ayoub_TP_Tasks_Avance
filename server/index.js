@@ -8,8 +8,13 @@
 //   DELETE /tasks/:id                 → supprimer (et ses fichiers)
 //   POST   /tasks/:id/fichiers        → joindre un fichier (champ « fichier », multipart)
 //   PUT    /tasks/:id/fichiers/:fid   → renommer un fichier joint
+//   GET    /tasks/:id/fichiers/:fid   → TÉLÉCHARGER un fichier (avec son vrai nom)
 //   DELETE /tasks/:id/fichiers/:fid   → retirer un fichier joint
-//   GET    /uploads/<nom>             → télécharger / afficher un fichier joint
+//   GET    /uploads/<nom>             → afficher un fichier joint (miniatures)
+//   POST   /tasks/:id/commentaires        → ajouter un commentaire
+//   PUT    /tasks/:id/commentaires/:cid   → modifier un commentaire
+//   DELETE /tasks/:id/commentaires/:cid   → supprimer un commentaire
+//   GET    /notifications?email=…&depuis=…  → nouveaux commentaires pour un observateur
 //   POST   /reset                     → remettre les tâches d'exemple
 const express = require('express');
 const cors = require('cors');
@@ -30,7 +35,7 @@ fs.mkdirSync(DOSSIER_UPLOADS, { recursive: true });
 // ---------- persistance (lecture / écriture du fichier JSON) ----------
 // Une tâche ancienne (sans les nouveaux champs) est complétée avec des valeurs vides
 const completer = (t) => ({
-  piecesJointes: [], rappelDate: null, rappelLieu: null, observateurs: [], ...t,
+  piecesJointes: [], rappelDate: null, rappelLieu: null, observateurs: [], commentaires: [], ...t,
 });
 
 function lire() {
@@ -128,6 +133,7 @@ app.post('/tasks', (req, res) => {
     rappelDate: req.body.rappelDate || null,
     rappelLieu: req.body.rappelLieu || null,
     observateurs: req.body.observateurs || [],
+    commentaires: [],
   };
   ecrire([tache, ...taches.filter((x) => x.id !== id)]);
   res.status(201).json(tache);
@@ -189,6 +195,15 @@ app.post('/tasks/:id/fichiers', upload.single('fichier'), (req, res) => {
   res.status(201).json(tache);
 });
 
+// Télécharger un fichier : l'app appelle cette route pour RÉCUPÉRER le fichier.
+// res.download() envoie le fichier avec l'en-tête Content-Disposition (nom d'origine).
+app.get('/tasks/:id/fichiers/:fid', (req, res) => {
+  const tache = lire().find((x) => x.id === req.params.id);
+  const piece = tache && tache.piecesJointes.find((p) => p.id === req.params.fid);
+  if (!piece) return res.status(404).json({ erreur: 'Fichier introuvable' });
+  res.download(path.join(DOSSIER_UPLOADS, path.basename(piece.url)), piece.nom);
+});
+
 app.put('/tasks/:id/fichiers/:fid', (req, res) => {
   const nom = typeof req.body.nom === 'string' ? req.body.nom.trim() : '';
   if (!nom || nom.length > 100) return res.status(400).json({ erreur: 'nom : 1 à 100 caractères' });
@@ -210,6 +225,79 @@ app.delete('/tasks/:id/fichiers/:fid', (req, res) => {
   tache.piecesJointes = tache.piecesJointes.filter((p) => p.id !== piece.id);
   ecrire(taches);
   res.json(tache);
+});
+
+// ---------- commentaires ----------
+// Un commentaire : { id, auteur, email, texte, date }
+function validerCommentaire({ auteur, email, texte }) {
+  const e = [];
+  if (typeof auteur !== 'string' || auteur.trim().length < 2) e.push('auteur obligatoire');
+  if (!EMAIL.test(email || '')) e.push('email invalide');
+  if (typeof texte !== 'string' || !texte.trim() || texte.length > 500) e.push('texte : 1 à 500 caractères');
+  return e;
+}
+
+app.post('/tasks/:id/commentaires', (req, res) => {
+  const erreurs = validerCommentaire(req.body);
+  if (erreurs.length) return res.status(400).json({ erreurs });
+  const taches = lire();
+  const tache = taches.find((x) => x.id === req.params.id);
+  if (!tache) return res.status(404).json({ erreur: 'Tâche introuvable' });
+  tache.commentaires.push({
+    id: nouvelId(),
+    auteur: req.body.auteur.trim(),
+    email: req.body.email.trim().toLowerCase(),
+    texte: req.body.texte.trim(),
+    date: new Date().toISOString(),
+  });
+  ecrire(taches);
+  res.status(201).json(tache);
+});
+
+app.put('/tasks/:id/commentaires/:cid', (req, res) => {
+  const texte = typeof req.body.texte === 'string' ? req.body.texte.trim() : '';
+  if (!texte || texte.length > 500) return res.status(400).json({ erreur: 'texte : 1 à 500 caractères' });
+  const taches = lire();
+  const tache = taches.find((x) => x.id === req.params.id);
+  const com = tache && tache.commentaires.find((c) => c.id === req.params.cid);
+  if (!com) return res.status(404).json({ erreur: 'Commentaire introuvable' });
+  com.texte = texte;
+  com.modifie = new Date().toISOString();
+  ecrire(taches);
+  res.json(tache);
+});
+
+app.delete('/tasks/:id/commentaires/:cid', (req, res) => {
+  const taches = lire();
+  const tache = taches.find((x) => x.id === req.params.id);
+  if (!tache || !tache.commentaires.some((c) => c.id === req.params.cid)) {
+    return res.status(404).json({ erreur: 'Commentaire introuvable' });
+  }
+  tache.commentaires = tache.commentaires.filter((c) => c.id !== req.params.cid);
+  ecrire(taches);
+  res.json(tache);
+});
+
+// Notifications d'un observateur : les commentaires écrits par D'AUTRES personnes
+// depuis la dernière vérification, sur les tâches qu'il observe.
+// L'app appelle cette route régulièrement (toutes les 10 s).
+app.get('/notifications', (req, res) => {
+  const email = String(req.query.email || '').trim().toLowerCase();
+  const depuis = String(req.query.depuis || '');
+  const maintenant = new Date().toISOString();
+  if (!EMAIL.test(email)) return res.status(400).json({ erreur: 'email invalide' });
+  const notifications = [];
+  if (depuis) {
+    for (const t of lire()) {
+      if (!t.observateurs.some((o) => o.email === email)) continue; // pas observateur
+      for (const c of t.commentaires) {
+        if (c.date > depuis && c.email !== email) {
+          notifications.push({ tacheId: t.id, titre: t.titre, commentaire: c });
+        }
+      }
+    }
+  }
+  res.json({ notifications, maintenant }); // « maintenant » = prochain « depuis »
 });
 
 app.post('/reset', (_req, res) => {

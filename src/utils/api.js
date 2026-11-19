@@ -43,5 +43,22 @@ export const renommerFichierApi = (id, fid, nom) =>
 
 export const supprimerFichierApi = (id, fid) => requete(`/tasks/${id}/fichiers/${fid}`, { method: 'DELETE' });
 
-// Adresse complète d'un fichier joint (pour l'afficher ou le télécharger)
+// Adresse d'un fichier joint pour l'AFFICHER (miniature, plein écran)
 export const urlFichier = (piece) => API_URL + piece.url;
+
+// Adresse de la route API qui RENVOIE le fichier à télécharger (GET)
+export const urlTelechargement = (id, piece) => `${API_URL}/tasks/${id}/fichiers/${piece.id}`;
+
+// ---------- Commentaires ----------
+export const ajouterCommentaireApi = (id, commentaire) =>
+  requete(`/tasks/${id}/commentaires`, { method: 'POST', body: JSON.stringify(commentaire) });
+
+export const modifierCommentaireApi = (id, cid, texte) =>
+  requete(`/tasks/${id}/commentaires/${cid}`, { method: 'PUT', body: JSON.stringify({ texte }) });
+
+export const supprimerCommentaireApi = (id, cid) =>
+  requete(`/tasks/${id}/commentaires/${cid}`, { method: 'DELETE' });
+
+// Nouveaux commentaires pour un observateur depuis une date → { notifications, maintenant }
+export const chargerNotifications = (email, depuis) =>
+  requete(`/notifications?email=${encodeURIComponent(email)}${depuis ? `&depuis=${encodeURIComponent(depuis)}` : ''}`);

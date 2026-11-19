@@ -1,6 +1,6 @@
 // Section « Pièces jointes » : photo (caméra), image (galerie) et fichier (document)
 // Les fichiers sont envoyés au serveur (POST /tasks/:id/fichiers) puis affichés ici.
-// Chaque fichier peut être ouvert, renommé (✏️) ou supprimé (🗑).
+// Chaque fichier peut être ouvert, téléchargé depuis l'API (⬇), renommé (✏️) ou supprimé (🗑).
 import React, { useState } from 'react';
 import {
   ActivityIndicator, Image, Linking, Modal, Platform, Pressable, Text, TextInput, View, StyleSheet,
@@ -14,6 +14,7 @@ import { useTasks } from '../context/TaskContext';
 import { urlFichier } from '../utils/api';
 import { COLORS, RADIUS } from '../constants/theme';
 import { confirmer, formaterTaille } from '../utils/helpers';
+import { telechargerFichier } from '../utils/telechargement';
 
 export default function SectionPiecesJointes({ tache }) {
   const { ajouterPieceJointe, supprimerPieceJointe, renommerPieceJointe } = useTasks();
@@ -23,6 +24,7 @@ export default function SectionPiecesJointes({ tache }) {
   const [cameraWeb, setCameraWeb] = useState(false); // webcam du PC (web)
   const [enEdition, setEnEdition] = useState(null); // id du fichier en cours de renommage
   const [nouveauNom, setNouveauNom] = useState('');
+  const [info, setInfo] = useState(null);           // message de réussite (téléchargement)
 
   const pieces = tache.piecesJointes ?? [];
 
@@ -94,6 +96,19 @@ export default function SectionPiecesJointes({ tache }) {
     }
   };
 
+  // Récupérer le fichier en appelant l'API (GET /tasks/:id/fichiers/:fid)
+  const telecharger = async (p) => {
+    setErreur(null);
+    setInfo(`Téléchargement de « ${p.nom} »…`);
+    try {
+      await telechargerFichier(tache.id, p);
+      setInfo(`« ${p.nom} » téléchargé ✓`);
+    } catch (e) {
+      setInfo(null);
+      setErreur('Téléchargement impossible : vérifiez le serveur.');
+    }
+  };
+
   const supprimer = (p) =>
     confirmer('Supprimer le fichier', `Supprimer « ${p.nom} » ?`, () =>
       supprimerPieceJointe(tache.id, p.id).catch(() => setErreur('Suppression impossible.')));
@@ -113,6 +128,7 @@ export default function SectionPiecesJointes({ tache }) {
         </View>
       )}
       {!!erreur && <Text style={styles.erreur}>{erreur}</Text>}
+      {!!info && <Text style={styles.info}>{info}</Text>}
       {pieces.length === 0 && !envoi && <Text style={styles.gris}>Aucun fichier pour l’instant.</Text>}
 
       {/* Liste des fichiers : miniature ou icône, nom, taille, boutons modifier / supprimer */}
@@ -148,6 +164,10 @@ export default function SectionPiecesJointes({ tache }) {
 
           {enEdition !== p.id && (
             <View style={styles.actions}>
+              <Pressable onPress={() => telecharger(p)} hitSlop={8} style={styles.action}
+                accessibilityLabel={`Télécharger ${p.nom}`}>
+                <Ionicons name="cloud-download-outline" size={20} color={COLORS.success} />
+              </Pressable>
               <Pressable onPress={() => commencerRenommage(p)} hitSlop={8} style={styles.action}
                 accessibilityLabel={`Renommer ${p.nom}`}>
                 <Ionicons name="create-outline" size={20} color={COLORS.primary} />
@@ -181,6 +201,7 @@ const styles = StyleSheet.create({
   ligneEnvoi: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   gris: { color: COLORS.textLight, fontSize: 13 },
   erreur: { color: COLORS.danger, fontSize: 13, fontWeight: '600' },
+  info: { color: COLORS.success, fontSize: 13, fontWeight: '600' },
   ligne: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: COLORS.input, borderRadius: RADIUS.md, padding: 8,

@@ -1,4 +1,6 @@
 // Section « Observateurs » : personnes qui suivent la tâche (nom + e-mail).
+// Un observateur reçoit une notification à chaque nouveau commentaire de la tâche
+// (si son e-mail est celui indiqué dans le Profil de son application).
 // On peut ajouter, modifier (✏️) et supprimer (🗑) un observateur.
 // Le bouton « Prévenir » ouvre l'application e-mail avec tous les observateurs.
 import React, { useState } from 'react';
@@ -6,6 +8,7 @@ import { Linking, Pressable, Text, TextInput, View, StyleSheet } from 'react-nat
 import { Ionicons } from '@expo/vector-icons';
 import Section, { MiniBouton } from './Section';
 import { useTasks } from '../context/TaskContext';
+import { useProfil } from '../context/ProfilContext';
 import { COLORS, RADIUS, STATUTS } from '../constants/theme';
 import { confirmer, genererId } from '../utils/helpers';
 
@@ -16,11 +19,19 @@ const initiales = (nom) => nom.split(' ').filter(Boolean).slice(0, 2).map((m) =>
 
 export default function SectionObservateurs({ tache }) {
   const { modifierTache } = useTasks();
+  const { profil, complet } = useProfil();
   const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
   const [erreur, setErreur] = useState(null);
   const [enEdition, setEnEdition] = useState(null); // id de l'observateur modifié (null = ajout)
   const observateurs = tache.observateurs ?? [];
+  const jeSuis = observateurs.some((o) => o.email === profil.email);
+
+  // Bouton rapide : m'ajouter moi-même comme observateur
+  const mAjouter = () =>
+    modifierTache(tache.id, {
+      observateurs: [...observateurs, { id: genererId(), nom: profil.nom, email: profil.email }],
+    });
 
   const vider = () => {
     setNom('');
@@ -73,6 +84,9 @@ export default function SectionObservateurs({ tache }) {
         <MiniBouton icon="mail-outline" label="Prévenir" onPress={prevenir} />
       )}>
       {observateurs.length === 0 && <Text style={styles.gris}>Personne ne suit cette tâche.</Text>}
+      {complet && !jeSuis && (
+        <MiniBouton icon="eye-outline" label="Suivre cette tâche (m’ajouter)" onPress={mAjouter} />
+      )}
 
       {observateurs.map((o) => (
         <View key={o.id} style={[styles.personne, enEdition === o.id && styles.personneActive]}>

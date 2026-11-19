@@ -1,6 +1,7 @@
 // Partie 4 — Écran 3 : Détails d'une tâche (infos complètes, modification, suppression)
-// + pièces jointes, rappels (date / lieu) et observateurs
-import React from 'react';
+// + 3 onglets : Fichiers (caméra, fichiers, téléchargement), Rappels (date, lieu),
+//   Suivi (observateurs + commentaires avec notification)
+import React, { useState } from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Badge from '../components/Badge';
@@ -8,6 +9,8 @@ import GradientButton from '../components/GradientButton';
 import SectionPiecesJointes from '../components/SectionPiecesJointes';
 import SectionRappels from '../components/SectionRappels';
 import SectionObservateurs from '../components/SectionObservateurs';
+import SectionCommentaires from '../components/SectionCommentaires';
+import Onglets from '../components/Onglets';
 import { useTasks } from '../context/TaskContext';
 import { COLORS, GRADIENTS, PRIORITES, RADIUS, SHADOW, STATUTS } from '../constants/theme';
 import { confirmer, formaterDate } from '../utils/helpers';
@@ -31,6 +34,7 @@ export default function TaskDetailScreen({ route, navigation }) {
   const { id } = route.params;              // paramètre reçu depuis la liste
   const { getTache, supprimerTache, basculerStatut } = useTasks();
   const tache = getTache(id);
+  const [onglet, setOnglet] = useState(route.params?.onglet ?? 'fichiers');
 
   // La tâche a pu être supprimée entre-temps
   if (!tache) {
@@ -93,9 +97,22 @@ export default function TaskDetailScreen({ route, navigation }) {
           title="Supprimer" icon="trash-outline" onPress={onSupprimer} />
       </View>
 
-      <SectionPiecesJointes tache={tache} />
-      <SectionRappels tache={tache} navigation={navigation} />
-      <SectionObservateurs tache={tache} />
+      {/* ---- Onglets ---- */}
+      <Onglets actif={onglet} onChange={setOnglet} onglets={[
+        { key: 'fichiers', label: 'Fichiers', icon: 'attach', badge: tache.piecesJointes?.length },
+        { key: 'rappels', label: 'Rappels', icon: 'notifications-outline',
+          badge: (tache.rappelDate ? 1 : 0) + (tache.rappelLieu ? 1 : 0) },
+        { key: 'suivi', label: 'Suivi', icon: 'chatbubbles-outline', badge: tache.commentaires?.length },
+      ]} />
+
+      {onglet === 'fichiers' && <SectionPiecesJointes tache={tache} />}
+      {onglet === 'rappels' && <SectionRappels tache={tache} navigation={navigation} />}
+      {onglet === 'suivi' && (
+        <>
+          <SectionObservateurs tache={tache} />
+          <SectionCommentaires tache={tache} navigation={navigation} />
+        </>
+      )}
     </ScrollView>
   );
 }
