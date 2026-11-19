@@ -31,6 +31,10 @@ npx expo start -c      # a = émulateur Android, w = navigateur, QR code = Expo 
 | Navigateur | `http://localhost:3000` |
 | Vrai téléphone | `EXPO_PUBLIC_API_URL=http://<IP du PC>:3000 npx expo start` |
 
+**Mode mobile dans le navigateur** : sur le web, le bouton **« Mode mobile »** (bord droit de la fenêtre) affiche l'app
+dans un cadre de téléphone (390 × 844, barre d'état, encoche) comme sur un vrai mobile. « Plein écran » pour revenir.
+Le choix est mémorisé. Fichier : `src/components/CadreMobile.web.js` (sur Android/iOS, `CadreMobile.js` ne fait rien).
+
 ---
 
 ## 2. Les 6 fonctionnalités demandées

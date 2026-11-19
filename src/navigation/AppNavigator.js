@@ -17,6 +17,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import TaskListScreen from '../screens/TaskListScreen';
@@ -83,6 +84,7 @@ const ICONES = {
 
 export default function AppNavigator() {
   const { chargement } = useTasks();
+  const insets = useSafeAreaInsets(); // espace de la barre d'accueil du téléphone (en bas)
 
   // Partie 5 : tant que les données ne sont pas lues, on affiche le chargement
   if (chargement) return <LoadingScreen />;
@@ -95,7 +97,8 @@ export default function AppNavigator() {
           tabBarActiveTintColor: COLORS.primary,
           tabBarInactiveTintColor: '#94A3B8',
           tabBarLabelStyle: { fontSize: 11.5, fontWeight: '700' },
-          tabBarStyle: styles.barre,
+          tabBarLabelPosition: 'below-icon', // texte sous l'icône, comme sur un téléphone (même sur grand écran)
+          tabBarStyle: [styles.barre, { height: 72 + insets.bottom }],
           tabBarIcon: ({ focused, color }) =>
             route.name === 'Ajouter' ? <BoutonAjouter /> : (
               <View style={[styles.icone, focused && styles.iconeActive]}>
